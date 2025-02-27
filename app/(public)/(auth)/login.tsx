@@ -2,6 +2,7 @@
 import {
   View,
   Text,
+  Platform,
   SafeAreaView,
   TextInput,
   TouchableOpacity,
@@ -18,6 +19,8 @@ import { useMutation } from "@tanstack/react-query";
 
 // Composant principal de l'écran de connexion
 export default function LoginScreen() {
+  const platform = Platform.OS;
+
   // Initialisation du router pour la navigation
   const router = useRouter();
   // Récupération des fonctions de gestion d'authentification du store
@@ -40,15 +43,18 @@ export default function LoginScreen() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
-        credentials: "include",
       }).then((res) => res.json());
     },
     // Gestion du succès de la connexion
     onSuccess: async (data) => {
       setIsAuthenticated(true);
       setUser(data);
-      await save("token", data?.token as string);
-      router.push("/(private)/(tabs)");
+      if (platform !== "web") {
+        await save("token", data?.token as string);
+      } else {
+        localStorage.setItem("token", data?.token as string);
+        router.push("/(private)/(tabs)");
+      }
     },
     // Gestion des erreurs
     onError: (error) => {
